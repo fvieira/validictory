@@ -47,34 +47,6 @@ DEFAULT_FORMAT_VALIDATORS = {
     'utc-millisec' : validate_format_utc_millisec,
     }
 
-def load_schemas(schema, schemas, last_key=None):
-    """
-    Extend the schema using a list of possible schemas.
-
-    Recursively searches the schema dictionary, replacing the extends
-    keyword with the referenced schema.
-
-    Currently updates dictionaries, which isn't correct behavior.
-    Also only supports one layer of extension
-    """
-    allowed = ["properties", "additionalProperties"]
-
-    for k, v in schema.iteritems():
-        # Check for schema extension
-        if k is "extends" and last_key not in allowed:
-            if schemas.has_key(v):
-                del schema["extends"]
-                schema.update(schemas[v])
-            else:
-                raise ValidationError("Schemea %s could not be found" % v)
-        # Recurse into nested schemas
-        elif isinstance(v, dict):
-            load_schemas(v, schemas, last_key=k)
-        elif isinstance(v, list):
-            for s in v:
-                if isinstance(v, dict):
-                    load_schemas(s, schemas)
-
 class SchemaValidator(object):
     '''
     Validator largely based upon the JSON Schema proposal but useful for
@@ -127,8 +99,8 @@ class SchemaValidator(object):
         message = desc % params
         raise ValidationError(message)
 
-    def _load_referenced_schemas(self, schema):
-        load_schemas(schema, self.schemas)
+    def validate_extends(self, x, fieldname, schema, fieldtype=None):
+        raise ValidationError("Extends present, referenced schema not loaded")
 
     def validate_type(self, x, fieldname, schema, fieldtype=None):
         '''
@@ -498,7 +470,6 @@ class SchemaValidator(object):
                 raise SchemaError("Schema structure is invalid.")
 
             newschema = copy.copy(schema)
-            self._load_referenced_schemas(newschema)
 
             # handle 'optional', replace it with 'required'
             if 'required' in schema and 'optional' in schema:

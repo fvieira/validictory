@@ -1,4 +1,5 @@
 import validictory
+import logging
 
 from unittest import TestCase
 
@@ -25,12 +26,14 @@ class TestExtends(TestCase):
 
     def test_bad_data(self):
         with self.assertRaises(ValueError):
-            validictory.validate({}, self.schema2, schemas=self.schemas)
+            schema = validictory.load_extends(self.schema2, self.schemas)
+            logging.debug(schema)
+            validictory.validate({}, schema)
 
     def test_good_data(self):
         try:
-            validictory.validate({"foo": 1}, self.schema2,
-                                 schemas=self.schemas)
+            schema = validictory.load_extends(self.schema2, self.schemas)
+            validictory.validate({"foo": 1}, schema)
         except ValueError, e:
             self.fail("Unexpected failure: %s" % e)
 
