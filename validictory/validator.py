@@ -45,8 +45,35 @@ DEFAULT_FORMAT_VALIDATORS = {
     'date'         : validate_format_date,
     'time'         : validate_format_time,
     'utc-millisec' : validate_format_utc_millisec,
-}
+    }
 
+def load_schemas(schema, schemas, last_key=None):
+    """
+    Extend the schema using a list of possible schemas.
+
+    Recursively searches the schema dictionary, replacing the extends
+    keyword with the referenced schema.
+
+    Currently updates dictionaries, which isn't correct behavior.
+    Also only supports one layer of extension
+    """
+    allowed = ["properties", "additionalProperties"]
+
+    for k, v in schema.iteritems():
+        # Check for schema extension
+        if k is "extends" and last_key not in allowed:
+            if schemas.has_key(v):
+                del schema["extends"]
+                schema.update(schemas[v])
+            else:
+                raise ValidationError("Schemea %s could not be found" % v)
+        # Recurse into nested schemas
+        elif isinstance(v, dict):
+            load_schemas(v, schemas, last_key=k)
+        elif isinstance(v, list):
+            for s in v:
+                if isinstance(v, dict):
+                    load_schemas(s, schemas)
 
 class SchemaValidator(object):
     '''
@@ -58,10 +85,12 @@ class SchemaValidator(object):
         ``required`` schema attribute False by default.
     '''
 
-    def __init__(self, format_validators=None, required_by_default=True):
+    def __init__(self, format_validators=None, required_by_default=True,
+                 schemas=None):
         if format_validators is None:
             format_validators = DEFAULT_FORMAT_VALIDATORS.copy()
 
+        self.schemas = schemas or {}
         self._format_validators = format_validators
         self.required_by_default = required_by_default
 
@@ -97,6 +126,9 @@ class SchemaValidator(object):
         params['fieldname'] = fieldname
         message = desc % params
         raise ValidationError(message)
+
+    def _load_referenced_schemas(self, schema):
+        load_schemas(schema, self.schemas)
 
     def validate_type(self, x, fieldname, schema, fieldtype=None):
         '''
@@ -466,6 +498,7 @@ class SchemaValidator(object):
                 raise SchemaError("Schema structure is invalid.")
 
             newschema = copy.copy(schema)
+            self._load_referenced_schemas(newschema)
 
             # handle 'optional', replace it with 'required'
             if 'required' in schema and 'optional' in schema:
