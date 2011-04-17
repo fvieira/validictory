@@ -48,7 +48,7 @@ def _load_schemas(schema, schemas, last_key=None):
 
     for k, v in schema.iteritems():
         # Check for schema extension
-        if k is "extends" and last_key not in allowed:
+        if k == "extends" and last_key not in allowed:
             if schemas.has_key(v):
                 del schema["extends"]
                 schema.update(schemas[v])
