@@ -8,7 +8,7 @@ __all__ = ['validate', 'load_extends', 'SchemaValidator',
 __version__ = '0.7.0'
 
 
-def validate(data, schema, validator_cls=SchemaValidator, schemas=None,
+def validate(data, schema, validator_cls=SchemaValidator,
              format_validators=None, required_by_default=True):
     '''
     Validates a parsed json document against the provided schema. If an
@@ -26,8 +26,7 @@ def validate(data, schema, validator_cls=SchemaValidator, schemas=None,
         ``required`` schema attribute False by default.
     :param schemas: defaults to None, possible schemas to extend
     '''
-    v = validator_cls(format_validators, required_by_default,
-                      schemas=schemas)
+    v = validator_cls(format_validators, required_by_default)
     return v.validate(data, schema)
 
 def load_extends(schema, schemas):

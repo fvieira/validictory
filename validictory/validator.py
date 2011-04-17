@@ -57,12 +57,10 @@ class SchemaValidator(object):
         ``required`` schema attribute False by default.
     '''
 
-    def __init__(self, format_validators=None, required_by_default=True,
-                 schemas=None):
+    def __init__(self, format_validators=None, required_by_default=True):
         if format_validators is None:
             format_validators = DEFAULT_FORMAT_VALIDATORS.copy()
 
-        self.schemas = schemas or {}
         self._format_validators = format_validators
         self.required_by_default = required_by_default
 
