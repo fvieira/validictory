@@ -46,12 +46,13 @@ def _load_schemas(schema, schemas, last_key=None):
     """
     allowed = ["properties", "additionalProperties"]
 
+    updates = []
+
     for k, v in schema.iteritems():
         # Check for schema extension
         if k == "extends" and last_key not in allowed:
             if schemas.has_key(v):
-                del schema["extends"]
-                schema.update(schemas[v])
+                updates.append((schema, schemas[v]))
             else:
                 raise ValidationError("Schemea %s could not be found" % v)
         # Recurse into nested schemas
@@ -61,6 +62,11 @@ def _load_schemas(schema, schemas, last_key=None):
             for s in v:
                 if isinstance(v, dict):
                     _load_schemas(s, schemas)
+
+    # Remove extension reference
+    for schema, newschema in updates:
+        del schema["extends"]
+        schema.update(newschema)
 
 if __name__ == '__main__':
     import sys
