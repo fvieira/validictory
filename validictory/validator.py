@@ -491,6 +491,16 @@ class SchemaValidator(object):
                 newschema['blank'] = self.blank_by_default
 
             for schemaprop in newschema:
+                if schemaprop in ['extends', 'default']:
+                    warnings.warn('The %s attribute has not yet been implemented and thus will not be validated' % schemaprop, UserWarning)
+                elif schemaprop not in ['_data', 'blank', 'optional', 'requires',
+                        'type', 'properties', 'patternProperties', 'additionalProperties', 'items',
+                        'additionalItems', 'required', 'dependencies', 'minimum', 'maximum', 'exclusiveMinimum',
+                        'exclusiveMaximum', 'minItems', 'maxItems', 'uniqueItems', 'pattern', 'minLength',
+                        'maxLength', 'enum', 'title', 'description', 'format', 'divisibleBy',
+                        'disallow', 'id', '$ref', '$schema']:
+                    raise SchemaError("Unknown attribute %s" % schemaprop)
+
 
                 validatorname = "validate_" + schemaprop
 
