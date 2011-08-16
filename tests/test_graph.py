@@ -1,5 +1,5 @@
 import unittest
-from validictory.graph import Graph
+from validictory.schemas import Graph
 
 class GraphTest(unittest.TestCase):
 

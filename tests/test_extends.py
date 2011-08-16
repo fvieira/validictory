@@ -5,14 +5,7 @@ from unittest import TestCase
 
 class TestExtends(TestCase):
 
-    schema1 = {
-        "type": "object",
-        "properties": {
-            "foo": {
-                "required": True,
-                }
-            },
-    }
+    schema1 = None
 
     schema2 = {
         "type": "object",
