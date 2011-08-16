@@ -3,6 +3,12 @@ import copy
 from datetime import datetime
 import warnings
 
+try:
+    from collections import Mapping
+    _HAS_ABCS = True
+except ImportError:
+    _HAS_ABCS = False
+
 
 class SchemaError(ValueError):
     """
@@ -55,14 +61,17 @@ class SchemaValidator(object):
     :param format_validators: optional dictionary of custom format validators
     :param required_by_default: defaults to True, set to False to make
         ``required`` schema attribute False by default.
+    :param blank_by_default: defaults to False, set to True to make ``blank``
+        schema attribute True by default.
     '''
 
-    def __init__(self, format_validators=None, required_by_default=True):
+    def __init__(self, format_validators=None, required_by_default=True, blank_by_default=False):
         if format_validators is None:
             format_validators = DEFAULT_FORMAT_VALIDATORS.copy()
 
         self._format_validators = format_validators
         self.required_by_default = required_by_default
+        self.blank_by_default = blank_by_default
 
     def register_format_validator(self, format_name, format_validator_fun):
         self._format_validators[format_name] = format_validator_fun
@@ -80,6 +89,8 @@ class SchemaValidator(object):
         return type(val) == bool
 
     def validate_type_object(self, val):
+        if _HAS_ABCS:
+            return isinstance(val, Mapping)
         return isinstance(val, dict)
 
     def validate_type_array(self, val):
@@ -182,7 +193,11 @@ class SchemaValidator(object):
                         try:
                             self._validate(eachItem, items)
                         except ValueError, e:
-                            raise type(e)("Failed to validate field '%s' list schema: %s" % (fieldname, e))
+                            # a bit of a hack: replace reference to _data
+                            # with 'list item' so error messages make sense
+                            old_error = str(e).replace("field '_data'",
+                                                       'list item')
+                            raise type(e)("Failed to validate field '%s' list schema: %s" % (fieldname, old_error))
                 else:
                     raise SchemaError("Properties definition of field '%s' is not a list or an object" % fieldname)
 
@@ -356,7 +371,7 @@ class SchemaValidator(object):
 
         format_validator = self._format_validators.get(format_option, None)
 
-        if format_validator:
+        if format_validator and value:
             format_validator(self, fieldname, value, format_option)
 
         # TODO: warn about unsupported format ?
@@ -479,7 +494,7 @@ class SchemaValidator(object):
                 newschema['required'] = self.required_by_default
 
             if 'blank' not in schema:
-                newschema['blank'] = False
+                newschema['blank'] = self.blank_by_default
 
             for schemaprop in newschema:
 

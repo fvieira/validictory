@@ -136,6 +136,19 @@ class TestFormat(TestCase):
         data = -1
         self.assertRaises(ValueError, validictory.validate, data, self.schema_utcmillisec)
 
+    def test_format_required_false(self):
+        schema = {
+            u'type': u'object',
+            u'properties': {
+                u'startdate': {u'type': u'string', u'format': u'date-time',
+                               u'required': False}
+            }
+        }
+        try:
+            validictory.validate({}, schema, required_by_default=False)
+        except ValueError, e:
+            self.fail("Unexpected failure: %s" % e)
+
     def test_format_custom_unregistered_pass(self):
         data = 'No-spaces-here'
 
@@ -412,18 +425,42 @@ class TestMaxLength(TestCase):
 
 class TestBlank(TestCase):
 
-    def test_blank_default(self):
+    def test_blank_default_false(self):
+        schema = {
+            "type": "object",
+            "properties": {
+                "key": {
+                    "type": "string",
+                    "required": True,
+                }
+            }
+        }
         try:
-            validictory.validate("test", {})
+            validictory.validate({"key": "value"}, {}, blank_by_default=False)
         except ValueError, e:
             self.fail("Unexpected failure: %s" % e)
 
-        self.assertRaises(ValueError, validictory.validate, "", {})
+        self.assertRaises(ValueError, validictory.validate, {"key": ""}, schema)
+
+    def test_blank_default_true(self):
+        schema = {
+            "type": "object",
+            "properties": {
+                "key": {
+                    "type": "string",
+                    "required": True,
+                }
+            }
+        }
+        try:
+            validictory.validate({"key": ""}, schema, blank_by_default=True)
+        except ValueError, e:
+            self.fail("Unexpected failure: %s" % e)
 
     def test_blank_false(self):
         schema = {"blank":False}
         try:
-            validictory.validate("test", schema)
+            validictory.validate("test", schema, blank_by_default=True)
         except ValueError, e:
             self.fail("Unexpected failure: %s" % e)
 
@@ -431,8 +468,8 @@ class TestBlank(TestCase):
 
     def test_blank_true(self):
         try:
-            validictory.validate("", {"blank":True})
-            validictory.validate("test", {"blank":True})
+            validictory.validate("", {"blank":True}, blank_by_default=False)
+            validictory.validate("test", {"blank":True}, blank_by_default=False)
         except ValueError, e:
             self.fail("Unexpected failure: %s" % e)
 

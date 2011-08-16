@@ -1,6 +1,19 @@
 validictory changelog
 =====================
 
+0.8.0
+-----
+**in development**
+    * add blank_by_default argument
+    * more descriptive error message for list items
+
+0.7.1
+-----
+**2011-05-03**
+    * PEP8 changes to code base
+    * fix for combination of format & required=False
+    * use ABCs to determine types in Python >= 2.6
+
 0.7.0
 -----
 **2011-03-15**
