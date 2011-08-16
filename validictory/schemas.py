@@ -126,10 +126,18 @@ def load(directory):
     for title, schema in schemas.items():
         gr.add_node(title)
         for dependency in find_schemas(schema):
+
+            # Make sure that dependency exists
+            if dependency not in schemas:
+                raise SchemaError(("{} schema depends on missing "
+                                   "schema {}".format(title, dependency))
+
             gr.add_edge(title, dependency)
 
     # Throw SchemaException if graph has cycles
     if gr.has_cycle():
         raise SchemaError("Circular dependency detected")
+
+    #
 
     return schemas

@@ -90,10 +90,10 @@ class LoadingSchemasTest(TestCase):
 
     @patch("validictory.schemas.load_schemas")
     def test_circular_dependency_detection(self, mock):
-        mock.return_value = {"schema1": SCHEMA_3, "schema2": SCHEMA_2}
+        mock.return_value = {
+            "schema1": SCHEMA_3,
+            "schema2": SCHEMA_2,
+            "schema3": {}
+            }
         with self.assertRaises(SchemaError):
             validictory.schemas.load("foo")
-
-
-
-
