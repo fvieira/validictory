@@ -1,5 +1,7 @@
 import json
 import os
+from validictory import SchemaError
+
 
 class Graph(dict):
 
@@ -53,8 +55,9 @@ def find_schemas(schema):
     Schemas can only be in the following properties
     - items
     - extends
-    - type
-    - format
+
+    Why not type? Type is for basic types. If you want an object to validate
+    against an existing schema, use extends
     """
     reserved_names = [
         "date-time", "date", "time", "utc-millisec", "regex", "color", "style",
@@ -62,21 +65,35 @@ def find_schemas(schema):
         "number", "integer", "boolean", "object", "array", "null", "any",
         ]
 
-    def beg(schema, found):
+    def find(schema, found):
 
-        for k,v in schema.items():
-            if (isinstance(v, basestring)
-                and v not in reserved_names
-                and k in ["extends", "items", "type", "format"]):
-                found.append(v)
+        # Find references to schemas
+        for option, constraints in schema.items():
+            if not option in ["extends", "items"]:
+                continue
 
+            # Make a list of constraints if we don't have one
+            if not isinstance(constraints, list):
+                constraints = [constraints]
+
+            # Schema names have to be strings
+            for constraint in constraints:
+                if (isinstance(constraint, basestring)
+                    and constraint not in reserved_names):
+                    found.append(constraint)
+
+        # Rescursivly search schema for schema references
         for v in schema.values():
             if isinstance(v, dict):
-                found.extend(beg(v, found))
+                found.extend(find(v, found))
+            if isinstance(v, list):
+                for node in v:
+                    if isinstance(node, dict):
+                        found.extend(find(node, found))
 
         return found
 
-    return beg(schema, [])
+    return find(schema, [])
 
 
 def load_schemas(directory):
@@ -97,7 +114,22 @@ def load_schemas(directory):
 
     return schemas
 
+
 def load(directory):
-    return load_schemas(directory)
 
+    # Load schemas into a dictionary
+    schemas = load_schemas(directory)
 
+    # Figure out dependecies
+    gr = Graph()
+
+    for title, schema in schemas.items():
+        gr.add_node(title)
+        for dependency in find_schemas(schema):
+            gr.add_edge(title, dependency)
+
+    # Throw SchemaException if graph has cycles
+    if gr.has_cycle():
+        raise SchemaError("Circular dependency detected")
+
+    return schemas
