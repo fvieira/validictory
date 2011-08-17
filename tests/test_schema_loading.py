@@ -53,6 +53,18 @@ SCHEMA_4 = {
         ]
     }
 
+SCHEMA_5 = {
+    "type": "object",
+    "extends": "schema6",
+    }
+
+SCHEMA_6 = {
+    "type": "object",
+    "properties": {
+        "bar": {"type": "string"}
+        }
+    }
+
 class LoadingSchemasTest(TestCase):
 
     @patch("os.walk")
@@ -97,3 +109,15 @@ class LoadingSchemasTest(TestCase):
             }
         with self.assertRaises(SchemaError):
             validictory.schemas.load("foo")
+
+    def test_fill_dependency(self):
+        schemas = {"schema6": SCHEMA_6}
+        schema = SCHEMA_5.copy()
+
+        validictory.schemas.fill_schema(schema, schemas)
+
+        self.assertEquals(schema, {
+                "type": "object",
+                "extends": [SCHEMA_6],
+                })
+
