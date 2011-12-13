@@ -51,8 +51,7 @@ DEFAULT_FORMAT_VALIDATORS = {
     'date'         : validate_format_date,
     'time'         : validate_format_time,
     'utc-millisec' : validate_format_utc_millisec,
-}
-
+    }
 
 class SchemaValidator(object):
     '''
@@ -108,6 +107,9 @@ class SchemaValidator(object):
         params['fieldname'] = fieldname
         message = desc % params
         raise ValidationError(message)
+
+    def validate_extends(self, x, fieldname, schema, fieldtype=None):
+        raise ValidationError("Extends present, referenced schema not loaded")
 
     def validate_type(self, x, fieldname, schema, fieldtype=None):
         '''

@@ -1,5 +1,8 @@
 #!/usr/bin/env python
-
+import argparse
+import copy
+import json
+import sys
 from validictory.validator import SchemaValidator, ValidationError, SchemaError
 
 __all__ = ['validate', 'SchemaValidator', 'ValidationError', 'SchemaError']
@@ -7,8 +10,9 @@ __version__ = '0.8.0'
 
 
 def validate(data, schema, validator_cls=SchemaValidator,
-             format_validators=None, required_by_default=True, blank_by_default=False):
-    '''
+             format_validators=None, required_by_default=True,
+             blank_by_default=False):
+    """
     Validates a parsed json document against the provided schema. If an
     error is found a :class:`ValidationError` is raised.
 
@@ -22,26 +26,23 @@ def validate(data, schema, validator_cls=SchemaValidator,
     :param format_validators: optional dictionary of custom format validators
     :param required_by_default: defaults to True, set to False to make
         ``required`` schema attribute False by default.
-    '''
+    :param schemas: defaults to None, possible schemas to extend
+    """
     v = validator_cls(format_validators, required_by_default, blank_by_default)
     return v.validate(data, schema)
 
 if __name__ == '__main__':
-    import sys
-    import json
-    if len(sys.argv) == 2:
-        if sys.argv[1] == "--help":
-            raise SystemExit("%s SCHEMAFILE [INFILE]" % (sys.argv[0],))
-        schemafile = open(sys.argv[1], 'rb')
-        infile = sys.stdin
-    elif len(sys.argv) == 3:
-        schemafile = open(sys.argv[1], 'rb')
-        infile = open(sys.argv[2], 'rb')
-    else:
-        raise SystemExit("%s SCHEMAFILE [INFILE]" % (sys.argv[0],))
+    parser = argparse.ArgumentParser(description="Validate a JSON file")
+    parser.add_argument("schemafile", type=argparse.FileType('r'),
+                        help="JSON Schema file")
+    parser.add_argument('infile', nargs='?', type=argparse.FileType('r'),
+                        default=sys.stdin, help="JSON file to validate")
+    args = parser.parse_args()
+
+    obj = json.load(args.infile)
+    schema = json.load(args.schemafile)
+
     try:
-        obj = json.load(infile)
-        schema = json.load(schemafile)
         validate(obj, schema)
     except ValueError, e:
         raise SystemExit(e)
